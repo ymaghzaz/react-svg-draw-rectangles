@@ -1,8 +1,6 @@
-import Example from './components/Example';
-import SecondExample from './components/SecondExample';
+import DrawRectangle from "./components/DrawRectangle";
+import SecondExample from "./components/SecondExample";
 
-export default Example;
+export default DrawRectangle;
 
-export {
-  SecondExample,
-};
+export { SecondExample };

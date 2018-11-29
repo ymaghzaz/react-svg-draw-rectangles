@@ -1,6 +1,6 @@
 {
-  "name": "create-react-library",
-  "version": "2.0",
+  "name": "draw-rectangles",
+  "version": "0.1.0",
   "description": "React NPM library starter kit based on Facebook's create react app",
   "main": "build/index.js",
   "scripts": {
@@ -11,13 +11,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DimiMikadze/create-react-library.git"
+    "url": ""
   },
-  "author": "Dimi Mikadze <dimi@udilia.com>",
-  "bugs": {
-    "url": "https://github.com/DimiMikadze/create-react-library/issues"
-  },
-  "homepage": "https://github.com/DimiMikadze/create-react-library#readme",
+  "author": "Youssef maghzaz <youssefmaghzaz@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "lodash": "^4.17.11"

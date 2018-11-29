@@ -20,7 +20,17 @@ const parseIntPoint = ({ x, y }) => {
   return { x, y };
 };
 
-const drawOptimalRectangle = (point1, point2, color, key) => {
+const switchPoint = ({ point1, point2, ...rec }) => {
+  let { x: localx1, y: localy1 } = point1;
+  let { x: localx2, y: localy2 } = point2;
+  let x1 = localx1 >= localx2 ? localx2 : localx1;
+  let y1 = localy1 >= localy2 ? localy2 : localy1;
+  let x2 = localx1 >= localx2 ? localx1 : localx2;
+  let y2 = localy1 >= localy2 ? localy1 : localy2;
+  return { point1: { x: x1, y: y1 }, point2: { x: x2, y: y2 }, ...rec };
+};
+
+const drawOptimalRectangle = (point1, point2, color, key, selected) => {
   let { x: localx1, y: localy1 } = parsePoint(point1);
   let { x: localx2, y: localy2 } = parsePoint(point2);
   let x1 = localx1 >= localx2 ? localx2 : localx1;
@@ -28,12 +38,14 @@ const drawOptimalRectangle = (point1, point2, color, key) => {
   let x2 = localx1 >= localx2 ? localx1 : localx2;
   let y2 = localy1 >= localy2 ? localy1 : localy2;
   const pathPoint = `M${x1},${y1},${x1},${y2},${x2},${y2},${x2},${y1}z`;
+  let fill = selected ? color : "none";
+  let fillOpacity = selected ? "0.75" : "0";
   return (
     <path
       key={"path" + key}
       d={pathPoint}
-      fill="none"
-      fillOpacity="0"
+      fill={fill}
+      fillOpacity={fillOpacity}
       strokeWidth="4"
       stroke={color}
     />
@@ -109,10 +121,10 @@ const addPoint = (rectangle, { x: xInt, y: yInt }) => {
 };
 
 const displayLabel = (rec, key, labelColor) => {
-  let { point1, point2, label: text } = rec;
+  let { point1, point2, label } = rec;
   let { x: x1, y: y1 } = parseIntPoint(point1);
   let { x: x2, y: y2 } = parseIntPoint(point2);
-
+  let text = label.name;
   let x = x1 >= x2 ? x2 : x1;
   let y = y1 >= y2 ? y2 : y1;
   y = y < 20 ? 20 : y;
@@ -152,7 +164,7 @@ const displayLabel = (rec, key, labelColor) => {
 
   return labelSvg;
 };
-class Example extends Component {
+class DrawRectangleComponent extends Component {
   constructor(props) {
     super(props);
 
@@ -161,15 +173,30 @@ class Example extends Component {
       initY: 0,
       x: 0,
       y: 0,
+      numberOfRectangle: 0,
+      selectedRectangle: null,
       numberOfClick: 0,
       rectangle: {
+        id: null,
+        selected: false,
         point1: null,
         point2: null,
         completed: false,
-        label: "TEXT"
+        label: null
       },
       rectangles: []
     };
+  }
+
+  componentDidMount() {
+    const { rectangles } = this.props;
+    let newRectangles = rectangles.map((rec, key) => {
+      rec.id = "init" + key;
+      rec.completed = true;
+      rec.selected = false;
+      return rec;
+    });
+    this.setState({ rectangles: newRectangles });
   }
 
   _onMouseMove = ({ clientX: x, clientY: y }) => {
@@ -180,51 +207,107 @@ class Example extends Component {
   };
 
   _onClick = ({ clientX: x, clientY: y }) => {
-    let { rectangle, rectangles, initX, initY, numberOfClick } = this.state;
+    let { label, handler } = this.props;
+    let {
+      rectangle,
+      rectangles,
+      initX,
+      initY,
+      numberOfClick,
+      numberOfRectangle
+    } = this.state;
     x = x - initX;
     y = y - initY;
     numberOfClick++;
 
     if (numberOfClick === 2) {
-      // if (!rectangle.completed) {
-      //   let newRectangle = addPoint(rectangle, { x, y });
-      //   this.setState({ rectangle: newRectangle });
-      // } else {
-      let newRectangle = addPoint(rectangle, { x, y });
+      let newRectangle = switchPoint(addPoint(rectangle, { x, y }));
+      newRectangle.id = numberOfRectangle;
+      numberOfRectangle++;
       let newRectangleList = [...rectangles, newRectangle];
       this.setState({
+        numberOfRectangle: numberOfRectangle,
         rectangle: {
+          id: null,
+          selected: false,
           point1: null,
           point2: null,
           completed: false,
-          label: "TEXT"
+          label: null
         },
         rectangles: newRectangleList,
         numberOfClick: 0
       });
+      if (handler) {
+        handler(newRectangleList);
+      }
     } else {
       let newRectangle = addPoint(rectangle, { x, y });
-      this.setState({ rectangle: newRectangle, numberOfClick: 1 });
+      newRectangle.label = label;
+      this.setState({
+        rectangle: newRectangle,
+        numberOfClick: 1
+      });
     }
   };
 
-  processDraw = (rectangle, color, key, currentPoint) => {
-    const { point1, point2 } = rectangle;
+  processDraw = (rectangle, key, currentPoint) => {
+    const { point1, point2, label, selected } = rectangle;
     if (rectangle.completed) {
-      return drawOptimalRectangle(point1, point2, color, key);
+      return drawOptimalRectangle(point1, point2, label.color, key, selected);
     } else {
       if (point1) {
         let { x, y } = currentPoint;
-        return drawOptimalRectangle(point1, { x, y }, color, key);
+        return drawOptimalRectangle(point1, { x, y }, label.color, key);
       } else {
         return <div />;
       }
     }
   };
 
+  removeRectangle = () => {
+    let { rectangles, selectedRectangle } = this.state;
+    _.remove(rectangles, {
+      id: selectedRectangle
+    });
+    this.setState({
+      rectangles,
+      selectedRectangle: null
+    });
+  };
+  selectRectangle = index => {
+    const { rectangles } = this.state;
+    let newSelectedRectangle = index;
+    let newRectangles = rectangles.map(rec => {
+      if (index === rec.id) {
+        rec.selected = !rec.selected;
+        if (!rec.selected) {
+          newSelectedRectangle = null;
+        }
+      } else {
+        rec.selected = false;
+      }
+      return rec;
+    });
+
+    this.setState({
+      rectangles: newRectangles,
+      selectedRectangle: newSelectedRectangle
+    });
+  };
+
   render() {
-    const { x, y, props, rectangles, rectangle, initX, initY } = this.state;
-    const { url, labelColor, labelText, imageStyle, debug } = this.props;
+    const {
+      x,
+      y,
+      props,
+      rectangles,
+      rectangle,
+      initX,
+      initY,
+      selectedRectangle
+    } = this.state;
+    const { url, labelColor, labelText, imageStyle, debug, label } = this.props;
     const imageWidth = 400;
     const imageHeight = 300;
     return (
@@ -238,6 +321,50 @@ class Example extends Component {
           </h1>
         )}
         <div />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+            padding: "10px 20px",
+            background: "#f6f6f6"
+          }}
+        >
+          {selectedRectangle === null && (
+            <button
+              style={{
+                width: `200px`,
+                height: `60px`,
+                margin: "2px 2px 2px 2px",
+                borderRadius: "4px",
+                color: "#f6f6f6",
+                fontSize: "large"
+              }}
+            >
+              {" "}
+              Remove
+            </button>
+          )}
+
+          {selectedRectangle !== null && (
+            <button
+              style={{
+                width: `200px`,
+                height: `60px`,
+                margin: "2px 2px 2px 2px",
+                borderRadius: "4px",
+                color: "white",
+                fontSize: "large",
+                backgroundColor: "#3032c1"
+              }}
+              onClick={this.removeRectangle}
+            >
+              Remove Selected Rectangle
+            </button>
+          )}
+        </div>
         <div style={styles.container}>
           <div
             style={{ ...styles.drawContainer, ...imageStyle }}
@@ -250,16 +377,23 @@ class Example extends Component {
               draggable="false"
               style={{ ...styles.centered, ...imageStyle }}
             >
-              <g key={"globale" + 33} style={{ opacity: "1" }}>
-                {this.processDraw(rectangle, labelColor, "441", { x, y })}
+              <g key={"initGlobale"} style={{ opacity: "1" }}>
+                {this.processDraw(rectangle, "441", { x, y })}
               </g>
 
               {rectangles.map((rec, index) => {
                 return (
-                  <g key={"globale" + index} style={{ opacity: "1" }}>
-                    {this.processDraw(rec, labelColor, index)}
-                    <g key={"label" + index}>
-                      {displayLabel(rec, index, labelColor)}
+                  <g
+                    onClick={e => {
+                      this.selectRectangle(rec.id);
+                      e.stopPropagation();
+                    }}
+                    key={"globale" + rec.id}
+                    style={{ opacity: "1", cursor: "pointer" }}
+                  >
+                    {this.processDraw(rec, rec.id)}
+                    <g key={"label" + rec.id}>
+                      {displayLabel(rec, rec.id, rec.label && rec.label.color)}
                     </g>
                   </g>
                 );
@@ -272,4 +406,4 @@ class Example extends Component {
   }
 }
 
-export default Example;
+export default DrawRectangleComponent;
