@@ -77,8 +77,8 @@ const styles = {
     background: "#f6f6f6"
   },
   drawContainer: {
-    position: "relative",
-    textAlign: "center"
+    width: "100%",
+    position: "relative"
   },
   svg: { margin: "0 auto", height: "auto", display: "block", maxWidth: "100%" },
   svgImage: { border: "0", margin: "0", padding: "0", boxSizing: "border-box" },
@@ -231,35 +231,40 @@ class Example extends Component {
           <div
             style={{ ...styles.drawContainer, ...imageStyle }}
             onMouseMove={this._onMouseMove}
+            onClick={this._onClick}
+            ref="drawerComponent"
           >
+            <img alt="imge" src={url} style={imageStyle} />
             <svg
-              ref="drawerComponent"
-              width={imageWidth}
-              height={imageHeight}
-              style={styles.svg}
-              onClick={this._onClick}
+              // preserveAspectRatio="xMinYMin meet"
+              // // viewBox={`0 0 ${imageWidth} ${imageHeight}`}
+              draggable="false"
+              // width={imageWidth}
+              // height={imageHeight}
+              style={{ ...styles.centered, ...imageStyle }} //{styles.svg}
             >
-              <image
+              {/* <image
                 ref="imageComponent"
-                viewBox="0 0 100 100"
+                x="0"
+                y="0"
                 width={imageWidth}
                 height={imageHeight}
                 style={{ ...styles.svgImage, opacity: "0.8" }}
                 alt="imge"
                 href={url}
-              />
+              /> */}
 
               <g key={"globale" + 33} style={{ opacity: "1" }}>
                 {this.processDraw(rectangle, labelColor, "441", { x, y })}
               </g>
-              {/* {rectangle.completed && displayLabel(rectangle, "10", labelColor)} */}
+
               {rectangles.map((rec, index) => {
                 return (
                   <g key={"globale" + index} style={{ opacity: "1" }}>
                     {this.processDraw(rec, labelColor, index)}
-                    {/* <g key={"label" + index}>
+                    <g key={"label" + index}>
                       {displayLabel(rec, index, labelColor)}
-                    </g> */}
+                    </g>
                   </g>
                 );
               })}
