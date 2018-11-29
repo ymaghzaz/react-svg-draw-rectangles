@@ -161,6 +161,7 @@ class Example extends Component {
       initY: 0,
       x: 0,
       y: 0,
+      numberOfClick: 0,
       rectangle: {
         point1: null,
         point2: null,
@@ -179,21 +180,31 @@ class Example extends Component {
   };
 
   _onClick = ({ clientX: x, clientY: y }) => {
-    let { rectangle, rectangles, initX, initY } = this.state;
+    let { rectangle, rectangles, initX, initY, numberOfClick } = this.state;
     x = x - initX;
     y = y - initY;
-    if (!rectangle.completed) {
+    numberOfClick++;
+
+    if (numberOfClick === 2) {
+      // if (!rectangle.completed) {
+      //   let newRectangle = addPoint(rectangle, { x, y });
+      //   this.setState({ rectangle: newRectangle });
+      // } else {
       let newRectangle = addPoint(rectangle, { x, y });
-      this.setState({ rectangle: newRectangle });
-    } else {
-      let newRectangleList = [...rectangles, rectangle];
+      let newRectangleList = [...rectangles, newRectangle];
       this.setState({
-        rectangle: addPoint(
-          { point1: null, point2: null, completed: false, label: "TEXT" },
-          { x, y }
-        ),
-        rectangles: newRectangleList
+        rectangle: {
+          point1: null,
+          point2: null,
+          completed: false,
+          label: "TEXT"
+        },
+        rectangles: newRectangleList,
+        numberOfClick: 0
       });
+    } else {
+      let newRectangle = addPoint(rectangle, { x, y });
+      this.setState({ rectangle: newRectangle, numberOfClick: 1 });
     }
   };
 
@@ -236,24 +247,9 @@ class Example extends Component {
           >
             <img alt="imge" src={url} style={imageStyle} />
             <svg
-              // preserveAspectRatio="xMinYMin meet"
-              // // viewBox={`0 0 ${imageWidth} ${imageHeight}`}
               draggable="false"
-              // width={imageWidth}
-              // height={imageHeight}
-              style={{ ...styles.centered, ...imageStyle }} //{styles.svg}
+              style={{ ...styles.centered, ...imageStyle }}
             >
-              {/* <image
-                ref="imageComponent"
-                x="0"
-                y="0"
-                width={imageWidth}
-                height={imageHeight}
-                style={{ ...styles.svgImage, opacity: "0.8" }}
-                alt="imge"
-                href={url}
-              /> */}
-
               <g key={"globale" + 33} style={{ opacity: "1" }}>
                 {this.processDraw(rectangle, labelColor, "441", { x, y })}
               </g>
